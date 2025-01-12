@@ -18,18 +18,24 @@ export default function Home() {
     selectChat,
     chats,
     currentChatId,
+    deleteChat,
+    renameChat,
+    toggleFavorite,
   } = useChat();
   const { mounted } = useThemeSetup();
 
   if (!mounted) return null;
 
   return (
-    <div className="flex h-screen max-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="flex h-screen max-h-screen bg-gray-50 dark:bg-gray-900 overflow-hidden">
       <ChatSidebar
         chats={chats}
         currentChatId={currentChatId}
         onChatSelect={selectChat}
         onNewChat={createNewChat}
+        onDeleteChat={deleteChat}
+        onRenameChat={renameChat}
+        onToggleFavorite={toggleFavorite}
       />
       <div className="flex flex-col flex-1">
         <Header />

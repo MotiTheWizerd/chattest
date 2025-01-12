@@ -26,6 +26,7 @@ export interface ChatHistory {
   createdAt: string;
   updatedAt: string;
   title?: string;
+  isFavorite?: boolean;
 }
 
 export interface ChatStore {

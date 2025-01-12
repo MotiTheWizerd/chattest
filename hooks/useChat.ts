@@ -64,7 +64,7 @@ export function useChat() {
       const reader = response.body?.getReader();
       if (!reader) throw new Error("Failed to get reader");
 
-      // Add empty assistant message
+      // Add empty assistant message and remove loading state
       setStore((prev) => {
         const chatId = prev.currentChatId!;
         const chat = prev.chats[chatId];
@@ -80,6 +80,7 @@ export function useChat() {
           },
         };
       });
+      setIsLoading(false); // Remove loading state as soon as we start receiving the response
 
       const decoder = new TextDecoder();
       let text = "";
@@ -91,7 +92,6 @@ export function useChat() {
         const chunk = decoder.decode(value, { stream: true });
         text += chunk;
 
-        // Update the last message with accumulated text
         setStore((prev) => {
           const chatId = prev.currentChatId!;
           const chat = prev.chats[chatId];
@@ -113,9 +113,54 @@ export function useChat() {
       }
     } catch (error) {
       console.error("Error:", error);
-    } finally {
       setIsLoading(false);
     }
+  };
+
+  const deleteChat = (chatId: string) => {
+    setStore((prev) => {
+      const newChats = { ...prev.chats };
+      delete newChats[chatId];
+
+      return {
+        currentChatId:
+          prev.currentChatId === chatId ? null : prev.currentChatId,
+        chats: newChats,
+      };
+    });
+  };
+
+  const renameChat = (chatId: string, newTitle: string) => {
+    setStore((prev) => {
+      const chat = prev.chats[chatId];
+      return {
+        ...prev,
+        chats: {
+          ...prev.chats,
+          [chatId]: {
+            ...chat,
+            title: newTitle,
+            updatedAt: new Date().toISOString(),
+          },
+        },
+      };
+    });
+  };
+
+  const toggleFavorite = (chatId: string) => {
+    setStore((prev) => {
+      const chat = prev.chats[chatId];
+      return {
+        ...prev,
+        chats: {
+          ...prev.chats,
+          [chatId]: {
+            ...chat,
+            isFavorite: !chat.isFavorite,
+          },
+        },
+      };
+    });
   };
 
   return {
@@ -128,5 +173,8 @@ export function useChat() {
     selectChat,
     chats: store.chats,
     currentChatId: store.currentChatId,
+    deleteChat,
+    renameChat,
+    toggleFavorite,
   };
 }
