@@ -1,7 +1,11 @@
 export interface Message {
+  id: string;
   role: "user" | "assistant";
   content: string;
+  createdAt: string;
 }
+
+export type ChatPersona = "Human" | "Rapper" | "Caveman";
 
 export interface ChatInputProps {
   input: string;
@@ -27,6 +31,7 @@ export interface ChatHistory {
   updatedAt: string;
   title?: string;
   isFavorite?: boolean;
+  persona: ChatPersona;
 }
 
 export interface ChatStore {

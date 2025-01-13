@@ -9,7 +9,11 @@ export function ChatMessageList({ messages }: ChatMessageListProps) {
   return (
     <div className="space-y-4">
       {messages.map((message, index) => (
-        <ChatMessage key={index} {...message} />
+        <ChatMessage
+          key={index}
+          role={message.role}
+          content={message.content}
+        />
       ))}
     </div>
   );

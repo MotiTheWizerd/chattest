@@ -1,76 +1,112 @@
-import { useState } from "react";
+"use client";
+
 import { ChatHistory } from "@/types/chat";
-import { ChatToolbar } from "./ChatToolbar";
 import { ChatHistoryItem } from "./ChatHistoryItem";
-import { ChevronRightIcon, ChevronLeftIcon } from "@heroicons/react/24/outline";
+import { ChatToolbar } from "./ChatToolbar";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface ChatSidebarProps {
   chats: Record<string, ChatHistory>;
   currentChatId: string | null;
-  onChatSelect: (chatId: string) => void;
+  isExpanded: boolean;
   onNewChat: () => void;
+  onChatSelect: (chatId: string) => void;
   onDeleteChat: (chatId: string) => void;
-  onRenameChat: (chatId: string, newTitle: string) => void;
   onToggleFavorite: (chatId: string) => void;
+  onRenameChat: (chatId: string, newTitle: string) => void;
+  onToggleExpanded: (expanded: boolean) => void;
 }
 
 export function ChatSidebar({
-  chats,
+  chats = {},
   currentChatId,
-  onChatSelect,
+  isExpanded,
   onNewChat,
+  onChatSelect,
   onDeleteChat,
-  onRenameChat,
   onToggleFavorite,
+  onRenameChat,
+  onToggleExpanded,
 }: ChatSidebarProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const sortedChats = Object.values(chats || {}).sort((a, b) => {
+    if (a.isFavorite && !b.isFavorite) return -1;
+    if (!a.isFavorite && b.isFavorite) return 1;
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
 
   return (
-    <div className="relative flex">
-      <div
-        className={`absolute top-0 left-0 h-full transition-all duration-300 ease-in-out transform ${
-          isExpanded ? "translate-x-0" : "-translate-x-64"
-        }`}
+    <>
+      <motion.div
+        initial={{ x: -256 }}
+        animate={{ x: isExpanded ? 0 : -256 }}
+        transition={{ duration: 0.3 }}
+        className="fixed left-0 top-0 z-30 h-full w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 shadow-lg"
       >
-        <div className="w-64 h-full border-r dark:border-gray-700 bg-white dark:bg-gray-800">
-          <ChatToolbar onNewChat={onNewChat} />
-          <div className="overflow-y-auto h-[calc(100vh-5rem)]">
-            {Object.values(chats)
-              .sort((a, b) => {
-                if (a.isFavorite && !b.isFavorite) return -1;
-                if (!a.isFavorite && b.isFavorite) return 1;
-                return (
-                  new Date(b.createdAt).getTime() -
-                  new Date(a.createdAt).getTime()
-                );
-              })
-              .map((chat) => (
-                <ChatHistoryItem
+        <div className="flex flex-col h-full">
+          <div className="p-4">
+            <ChatToolbar onNewChat={onNewChat} />
+          </div>
+          <div className="flex-1 overflow-y-auto">
+            <AnimatePresence>
+              {sortedChats.map((chat) => (
+                <motion.div
                   key={chat.id}
-                  chat={chat}
-                  isActive={currentChatId === chat.id}
-                  onSelect={onChatSelect}
-                  onDelete={onDeleteChat}
-                  onRename={onRenameChat}
-                  onToggleFavorite={onToggleFavorite}
-                />
+                  layout
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, x: -100 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <ChatHistoryItem
+                    chat={chat}
+                    isSelected={chat.id === currentChatId}
+                    onSelect={() => onChatSelect(chat.id)}
+                    onDelete={() => onDeleteChat(chat.id)}
+                    onToggleFavorite={() => onToggleFavorite(chat.id)}
+                    onRename={(newTitle) => onRenameChat(chat.id, newTitle)}
+                  />
+                </motion.div>
               ))}
+            </AnimatePresence>
           </div>
         </div>
-      </div>
+      </motion.div>
       <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className={`absolute top-4 transition-all duration-300 ease-in-out ${
-          isExpanded ? "left-64" : "left-0"
-        } z-10 p-2 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-r-lg hover:bg-gray-100 dark:hover:bg-gray-700`}
-        aria-label={isExpanded ? "Collapse sidebar" : "Expand sidebar"}
+        onClick={() => onToggleExpanded(!isExpanded)}
+        className={`fixed z-40 p-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg transition-all duration-300 ${
+          isExpanded ? "left-64 ml-2" : "left-2"
+        } top-2`}
       >
         {isExpanded ? (
-          <ChevronLeftIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+          <svg
+            className="w-6 h-6 text-gray-600 dark:text-gray-300"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M11 19l-7-7 7-7m8 14l-7-7 7-7"
+            />
+          </svg>
         ) : (
-          <ChevronRightIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+          <svg
+            className="w-6 h-6 text-gray-600 dark:text-gray-300"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M13 5l7 7-7 7M5 5l7 7-7 7"
+            />
+          </svg>
         )}
       </button>
-    </div>
+    </>
   );
 }
